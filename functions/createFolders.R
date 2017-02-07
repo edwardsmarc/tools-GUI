@@ -4,10 +4,15 @@
 
 createFolders <- function(parent, input=TRUE, results=TRUE, benchmarks=TRUE, networks=TRUE, other=""){
   
+  # check parent exists
+  if(!dir.exists(parent)){
+    stop("Parent directory does not exist")
+  }
+  
   # for each file, check if it already exists, then create
   if(input==TRUE){
     if(!dir.exists(paste0(parent, "/input"))){
-      dir.create(paste0(parent, "/input")))
+      dir.create(paste0(parent, "/input"))
     } else{
       print(paste0("Directory already exists: ", paste0(parent, "/input")))
     }
@@ -15,7 +20,7 @@ createFolders <- function(parent, input=TRUE, results=TRUE, benchmarks=TRUE, net
   
   if(results==TRUE){
     if(!dir.exists(paste0(parent, "/results"))){
-      dir.create(paste0(parent, "/results")))
+      dir.create(paste0(parent, "/results"))
     } else{
       print(paste0("Directory already exists: ", paste0(parent, "/results")))
     }
@@ -23,7 +28,7 @@ createFolders <- function(parent, input=TRUE, results=TRUE, benchmarks=TRUE, net
   
   if(benchmarks==TRUE){
     if(!dir.exists(paste0(parent, "/benchmarks"))){
-      dir.create(paste0(parent, "/benchmarks")))
+      dir.create(paste0(parent, "/benchmarks"))
     } else{
       print(paste0("Directory already exists: ", paste0(parent, "/benchmarks")))
     }
@@ -31,7 +36,7 @@ createFolders <- function(parent, input=TRUE, results=TRUE, benchmarks=TRUE, net
   
   if(networks==TRUE){
     if(!dir.exists(paste0(parent, "/networks"))){
-      dir.create(paste0(parent, "/networks")))
+      dir.create(paste0(parent, "/networks"))
     } else{
       print(paste0("Directory already exists: ", paste0(parent, "/networks")))
     }
