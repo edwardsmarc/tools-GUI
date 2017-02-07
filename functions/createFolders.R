@@ -1,6 +1,6 @@
 # Marc Edwards - BEACONs
 # Feb 6 2017
-# function to create folder structure for networking tools
+# function to create folder structure for networking tools - GUI version
 
 createFolders <- function(parent, input=TRUE, results=TRUE, benchmarks=TRUE, networks=TRUE, other=""){
   
