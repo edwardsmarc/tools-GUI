@@ -1,31 +1,110 @@
-# Test GUI for learning gWidgets
+# GUI for networking tools
 # gWidgets is a high level package to create simple GUI's. It provides a common set of functions for accessing more complex GUI toolkits -  tcl/tk, Gtk, Java, Qt - it doesn't provide as much customization as using the underlying toolkits. 
+
+# naming convention for groups (e.g. gp_1_parent) and objects:
+# gp_
+# 1_: the tab number
+# parent: the argument being provided
+# _btn; _lbl; _check - widget type
+
+# all the elements in a widget need to be assigned to a container group. And each container group needs to be assigned to a parent container.
 
 rm(list=ls())
 
-test_GUI <- function(){
+
+GUI_v1 <- function(){
   
-library(gWidgets)
-library(gWidgetstcltk) # using a different package here will access a different GUI toolkit.
-source("denovoRep.R")
+#library(gWidgets)
+library(gWidgets2)
+#library(gWidgetstcltk) # using a different package here will access a different GUI toolkit.
+library(gWidgets2tcltk) # using a different package here will access a different GUI toolkit.
+source("../functions/createFolders.R")
 
+  
 # set up high level containers here
-win <- gwindow("csv file upload example") # the full window container that will hold everything
+win <- gwindow("GUI_v1") # the full window container that will hold everything
 ##
-g <- ggroup(container = win, horizontal = FALSE, expand = TRUE)
-nb <- gnotebook(container = g)
+g <- ggroup(container = win, horizontal = FALSE, expand = TRUE) # a high level group that will hold everything
+nb <- gnotebook(container = g) # a notebook container
 ##
-nb1 <- ggroup(container = nb, label = "edit csv", horizontal = FALSE)
-nb2 <- ggroup(container = nb, label = "denovoRep", horizontal = FALSE)
+nb1 <- ggroup(container = nb, label = "folders", horizontal = FALSE)
+#nb2 <- ggroup(container = nb, label = "denovoRep", horizontal = FALSE)
 ##
 
-###### CSV test tab ############################################################
 
-# all the elements in a widget need to be assigned to a container group. And each container group needs to be assigned to a parent container.
-grp_name <- ggroup(container = nb1)
-lbl_data_frame_name <- glabel("Variable to save data to: ", container = grp_name) # this is text label for the group
-txt_data_frame_name <- gedit("mydata", container = grp_name) # this is text box for the group
+###### tab 1 - folder set up ############################################################
 
+# browse to select parent directory where folders will be added
+gp_1_parent <- ggroup(container = nb1) 
+gp_1_parent_lbl <- glabel("Parent folder: ", container = gp_1_parent) # this is text label for the group
+gp_1_parent_btn <- gfilebrowse( # file browser - allows selection of file 
+  text = "", 
+  type = "selectdir", 
+  quote = TRUE, 
+  container = gp_1_parent, 
+  handler = function(h,...){
+    svalue(txtOutput) <- paste0(svalue(txtOutput), "\n", "Parent directory: ", svalue(gp_1_parent_btn))
+  }
+)
+
+# checkboxes to select new folders to add
+gp_1_folders <- ggroup(container = nb1, horizontal = FALSE)
+gp_1_folders_lbl <- glabel("Create folders: ", container = gp_1_folders)
+gp_1_folders_check_input <- gcheckbox(text = "input", checked=TRUE, container = gp_1_folders)
+gp_1_folders_check_results <- gcheckbox(text = "results", checked=TRUE, container = gp_1_folders)
+gp_1_folders_check_benchmarks <- gcheckbox(text = "benchmarks", checked=TRUE, container = gp_1_folders)
+gp_1_folders_check_networks <- gcheckbox(text = "networks", checked=TRUE, container = gp_1_folders)
+
+# optional other filenames to add
+gp_1_folders_other <- ggroup(container = gp_1_folders, horizontal = TRUE)
+gp_1_folders_other_lbl <- glabel("Other: ", container = gp_1_folders_other)
+gp_1_folders_other_txt <- gedit(text = "", container = gp_1_folders_other)
+
+# button to run the createFolders function
+gp_1_run <- ggroup(container = nb1)
+gp_1_run_btn <- gbutton(
+  text = "Create folders",
+  container = gp_1_run,
+  handler = function(h, ...){ 
+    tryCatch({
+    createFolders(
+      parent = svalue(gp_1_parent_btn), 
+      input = svalue(gp_1_folders_check_input), 
+      results = svalue(gp_1_folders_check_results), 
+      benchmarks = svalue(gp_1_folders_check_benchmarks), 
+      networks = svalue(gp_1_folders_check_networks), 
+      other = svalue(gp_1_folders_other_txt))
+    
+    svalue(txtOutput) <- paste0(svalue(txtOutput), "\n", "Folders created")
+    }, error = function(cond){
+      message("Could not create folders")
+      message(cond)
+    }
+    )
+  }
+)
+
+
+
+
+# output text box
+frmOutput <- gframe("Output", container = g)
+txtOutput <- gtext("", container = frmOutput)
+
+
+
+
+
+
+
+
+###########################################################################################################################
+###########################################################################################################################
+###########################################################################################################################
+###########################################################################################################################
+###########################################################################################################################
+###########################################################################################################################
+###########################################################################################################################
 # make a button to upload a csv file
 #grp_upload <- ggroup(container = nb1)
 btn_upload <- gbutton(
