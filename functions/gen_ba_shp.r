@@ -2,7 +2,7 @@
 # Feb 7 2017
 # function to create benchmark shapefiles for networking tools - GUI version
 
-gen_ba_shp <- function(buildCsv, catchmentsShp, outFile, prjFile, shp.paths=c()){
+gen_ba_shp <- function(buildCsv, catchmentsShp, outFile, prjFile, shp.paths=""){
   
   library(raster)
   library(rgeos)
@@ -113,7 +113,7 @@ gen_ba_shp <- function(buildCsv, catchmentsShp, outFile, prjFile, shp.paths=c())
     ################################################################################
     
     # add shapefiles if provided
-    if(length(shp.paths) > 0){
+    if(any(nchar(shp.paths) > 0)){
       for(shpDir in shp.paths){
         
         print(paste0("adding additional shapefile: ", shpDir))
@@ -134,6 +134,12 @@ gen_ba_shp <- function(buildCsv, catchmentsShp, outFile, prjFile, shp.paths=c())
         shp <- spChFIDs(shp, row.names(shp))
         pbShp <- spRbind(pbShp, shp) # append to pbShp
       }
+    }
+    
+    # remove any extra SP_ID columns
+    for(x in colnames(pbShp@data)){ 
+      if(grepl("SP_ID",x)==TRUE)
+        pbShp@data[[x]] <- NULL
     }
     
     writePolyShape(pbShp, outFile)
