@@ -18,6 +18,9 @@ networkRep <- function(singlesCsv,nBA,outFile,filterCsv="") {
   # CHECKS 
   ##############################################
   
+  # make nBA numeric
+  nBA <- as.numeric(nBA)
+  
   # Check singles csv exists
   if(file.exists(singlesCsv)){
     y1 <- read.csv(singlesCsv)
@@ -94,7 +97,7 @@ networkRep <- function(singlesCsv,nBA,outFile,filterCsv="") {
         if(counter==1){ # for first network, make data frame using dplyr
           grpTab <- y1 %>% # calculate row values
             filter(networks %in% pbList) %>%
-            select(-contains("networks")) %>%
+            dplyr::select(-contains("networks")) %>%
             summarise_each(funs(max)) %>%
             mutate(networks=pb)
           grpTab <- grpTab[c(which(colnames(grpTab)=="networks"),1:(length(colnames(grpTab))-1))] # order
