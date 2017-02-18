@@ -86,7 +86,7 @@ benchmarkRep <- function(catchDbf,buildCsv,targetTab,crit,outFile,filterCsv="") 
   buildCount <- length(builder)
   for (a in 1:length(builder)) { # builder - one row for each benchmark. Last column is list of catchments in the benchmark
     
-    if(a %% 50 == 0){print(paste0("Processing benchmark ",a, "of", buildCount))}
+    if(a %% 50 == 0){print(paste0("Processing benchmark ",a, " of ", buildCount))}
     
     r <- strsplit(builder[a], split=",") # name of benchmark
     pb <- r[[1]][1]
