@@ -42,6 +42,10 @@ gen_ba_shp <- function(buildCsv, catchmentsShp, outFile, prjFile, shp.paths=""){
     stop("outFile is not a '.shp'. Add '.shp' to outFile path")
   }
   
+  # Check prjFile exists
+  if(!file.exists(prjFile)){
+    stop(paste0("File does not exist: ", prjFile))
+  }
   #############################################################################################
   # Generate shp files
   
