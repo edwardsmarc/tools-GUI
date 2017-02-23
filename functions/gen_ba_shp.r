@@ -4,9 +4,9 @@
 
 gen_ba_shp <- function(buildCsv, catchmentsShp, outFile, prjFile, shp.paths=""){
   
-  library(raster)
-  library(rgeos)
-  library(maptools)
+  library(raster, lib.loc = "../packages/")
+  library(rgeos, lib.loc = "../packages/")
+  library(maptools, lib.loc = "../packages/")
   
   #############################################################################################
   # Check that input files exist and have correct attributes
@@ -31,11 +31,11 @@ gen_ba_shp <- function(buildCsv, catchmentsShp, outFile, prjFile, shp.paths=""){
   }
   
   # Make output dir if it doesn't exist.
-  outFile_split <- strsplit(outFile, "/")[[1]]
-  outFile_dir <- paste0(outFile_split[1:(length(outFile_split)-1)], collapse="/")
-  if(!dir.exists(outFile_dir)){
-    dir.create(outFile_dir)
-  }
+  # outFile_split <- strsplit(outFile, "/")[[1]]
+  # outFile_dir <- paste0(outFile_split[1:(length(outFile_split)-1)], collapse="/")
+  # if(!dir.exists(outFile_dir)){
+  #   dir.create(outFile_dir)
+  # }
   
   # Check if outFile has .shp.
   if(!grepl(".shp", outFile)){
