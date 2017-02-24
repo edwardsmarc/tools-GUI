@@ -21,8 +21,8 @@ criteria2catch <- function(catchmentsShp, rasterPath, cellsize, disaggregate.fac
 #prjFile = path to the .prj file to be used.
 
   
-  library(raster)
-  library(maptools)
+  library(raster, lib.loc = "../packages/")
+  library(maptools, lib.loc = "../packages/")
   
   # Assign outfile
   if(nchar(outFile) == 0){
