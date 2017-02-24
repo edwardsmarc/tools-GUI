@@ -2,7 +2,7 @@
 # Feb 6 2017
 # function to create folder structure for networking tools - GUI version
 
-createFolders <- function(parent, input=TRUE, results=TRUE, benchmarks=TRUE, networks=TRUE, other=""){
+createFolders <- function(parent, input=TRUE, results=TRUE, benchmarks=TRUE, networks=TRUE, gisdata=TRUE, tmp=TRUE, other=""){
   
   # check parent exists
   if(!dir.exists(parent)){
@@ -39,6 +39,22 @@ createFolders <- function(parent, input=TRUE, results=TRUE, benchmarks=TRUE, net
       dir.create(paste0(parent, "/networks"))
     } else{
       print(paste0("Directory already exists: ", paste0(parent, "/networks")))
+    }
+  }
+  
+  if(gisdata==TRUE){
+    if(!dir.exists(paste0(parent, "/gisdata"))){
+      dir.create(paste0(parent, "/gisdata"))
+    } else{
+      print(paste0("Directory already exists: ", paste0(parent, "/gisdata")))
+    }
+  }
+  
+  if(tmp==TRUE){
+    if(!dir.exists(paste0(parent, "/tmp"))){
+      dir.create(paste0(parent, "/tmp"))
+    } else{
+      print(paste0("Directory already exists: ", paste0(parent, "/tmp")))
     }
   }
 
