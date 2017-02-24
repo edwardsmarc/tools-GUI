@@ -23,10 +23,10 @@ evaluate_pa_shp <- function(inputShp, catchmentsShp, intactnessCol, areaTarget, 
   # areaTarget - area target PAs need to achieve - e.g. Minimum Dynamic Reserve value
   # intactnessThreshold - minimum intacntess of catchments permitted in benchmark - e.g. 0.8
   
-  library(raster)
-  library(maptools)
-  library(sp)
-  library(rgeos)
+  library(raster, lib.loc = "../packages/")
+  library(maptools, lib.loc = "../packages/")
+  library(sp, lib.loc = "../packages/")
+  library(rgeos, lib.loc = "../packages/")
   
   # CHECKS
   ###################################
@@ -51,14 +51,14 @@ evaluate_pa_shp <- function(inputShp, catchmentsShp, intactnessCol, areaTarget, 
   
   # convert areaTarget and intacntessThreshold to numeric
   areaTarget <- as.numeric(areaTarget)
-  intactnessThreshold <- as.numeric(intactnessThreshold)
+  intactnessThreshold <- as.numeric(intactnessThreshold)/100
   
   # Make output dir if it doesn't exist.
-  outFile_split <- strsplit(outFile, "/")[[1]]
-  outFile_dir <- paste0(outFile_split[1:(length(outFile_split)-1)], collapse="/")
-  if(!dir.exists(outFile_dir)){
-    dir.create(outFile_dir)
-  }
+  # outFile_split <- strsplit(outFile, "/")[[1]]
+  # outFile_dir <- paste0(outFile_split[1:(length(outFile_split)-1)], collapse="/")
+  # if(!dir.exists(outFile_dir)){
+  #   dir.create(outFile_dir)
+  # }
   
   # Check if outFile has .shp.
   if(!grepl(".shp", outFile)){
@@ -108,22 +108,22 @@ evaluate_pa_shp <- function(inputShp, catchmentsShp, intactnessCol, areaTarget, 
   }
   
   # delete sliver polygons
-  for(i in 1:length(inShp_dis2@polygons)){
-    jj <- length(inShp_dis2@polygons[[i]]@Polygons)
-    dList <- NULL
-    for (j in 1:jj) { # makes list of polygons with area < 1
-      if (inShp_dis2@polygons[[i]]@Polygons[[j]]@area < 1) {
-        dList <- c(dList, j)
-      }
-    }
-    if (length(dList) > 0) { # delete dList polygons
-      counter <- 0
-      for (d in dList) {
-        inShp_dis2@polygons[[i]]@Polygons[[d-counter]] <- NULL
-        counter = counter + 1
-      }
-    }
-  }
+  # for(i in 1:length(inShp_dis2@polygons)){
+  #   jj <- length(inShp_dis2@polygons[[i]]@Polygons)
+  #   dList <- NULL
+  #   for (j in 1:jj) { # makes list of polygons with area < 1
+  #     if (inShp_dis2@polygons[[i]]@Polygons[[j]]@area < 1) {
+  #       dList <- c(dList, j)
+  #     }
+  #   }
+  #   if (length(dList) > 0) { # delete dList polygons
+  #     counter <- 0
+  #     for (d in dList) {
+  #       inShp_dis2@polygons[[i]]@Polygons[[d-counter]] <- NULL
+  #       counter = counter + 1
+  #     }
+  #   }
+  # }
   
   shp <- inShp_dis2
   
@@ -143,17 +143,23 @@ evaluate_pa_shp <- function(inputShp, catchmentsShp, intactnessCol, areaTarget, 
   
   #####
   # calculate minimum intactness
-  print("Calculate minimum intacntess...")
-  shp_int <- raster::intersect(catchShp, shp) # intersect catchments with polygons
+  # intersect catchments and polygons, remove slivers, select full catchments of intersecting cathments, convert to centroids, intersect centrods that fall in polygons, calc min intact.
+    # just intersecting leaves tiny catchments fragments that only just overlap polygon. Would have to set area limit for slivers to include. Instead, select catchments to include based on their centroid overlap. Can't use centroid overlap of full catchments dataset because some catchments that were filtered out based on intacntness threshold will get added back in (i.e. their centroids don't fall within the catchment polygon).
   
-  # remove slivers - the minimum intacntess can be restricted catchments with areas of at least x km2. Initially setting this to 0.01 to eliminate the smallest slivers.
-  shp_int@data$area2_km2 <- round(gArea(shp_int, byid = TRUE) / 1000000, 3) # calc area
-  shp_int <- shp_int[shp_int@data$area2_km2 > 0.01,] # filter on area
+  print("Calculate minimum intacntess...")
+  
+  shp_int1 <- raster::intersect(catchShp, shp)
+  shp_int1@data$Area_int <- gArea(shp_int1, byid = TRUE) / 1000000 # remove slivers <0.01km2
+  shp_int1 <- shp_int1[shp_int1@data$Area_int >= 0.01,] # remove slivers <0.01km2
+  catch_int <- catchShp[catchShp@data$CATCHNUM %in% shp_int1@data$CATCHNUM,] # select catchments that intersect
+  cc1 <- gCentroid(catch_int, byid = TRUE) # make all catchments centroids
+  cc1DF <- SpatialPointsDataFrame(cc1, catch_int@data) # join catchments data frame to centroids
+  shp_int2 <- raster::intersect(cc1DF, shp)
   
   # calculate minimum intacntess catchment in each dis_ID2 group
   shp@data$min_intact <- 0
   for(gp in shp@data$dis_ID2){
-    shp@data$min_intact[shp@data$dis_ID2 == gp] <- min(shp_int@data[[intactnessCol]][shp_int@data$dis_ID2 == gp])
+    shp@data$min_intact[shp@data$dis_ID2 == gp] <- min(shp_int2@data[[intactnessCol]][shp_int2@data$dis_ID2 == gp])
   }
   #####
   
