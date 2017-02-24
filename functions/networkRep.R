@@ -12,8 +12,8 @@ networkRep <- function(singlesCsv,nBA,outFile,filterCsv="") {
   # nBA: number of benchmarks per network to calculate. All combinations will be tested.
   # filterCsv: if provided, this list will over-ride the default of all combinations. Use this if you only want to test a subset of possible networks. Must be a file path to a csv table with a "networks" column containing the network names to be processed. Network name should be of the format: PB_1_PB_2 for a network made up of two benchmarks named PB_1 and PB_2. 
   
-  library(dplyr)
-  library(readr)
+  library(dplyr, lib.loc = "../packages/")
+  library(readr, lib.loc = "../packages/")
   
   # CHECKS 
   ##############################################
