@@ -17,7 +17,7 @@ results_summary <- function(criteria,summaryDir,rareThreshold=0,outFile) {
   # results table must have 'networks' column.
   # target table must have 'bnd_prop' column
   
-  library(dplyr)
+  library(dplyr, lib.loc = "../packages/")
   
   # CHECKS 
   ##############################################
