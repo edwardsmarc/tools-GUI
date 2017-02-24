@@ -12,18 +12,18 @@ benchmarkRep <- function(catchDbf,buildCsv,targetTab,crit,outFile,filterCsv="") 
   # outFile - path to output csv table where results will be saved.
   # filterCsv - optional. If provided, should be a path to a csv table that has a PB column with a list of benchmark names. This list should be a subset of the benchmarks in buildCsv. Only benchmarks in the filterCsv table will be processed.
   
-  library(foreign)
-  library(dplyr)
+  library(foreign, lib.loc = "../packages/")
+  library(dplyr, lib.loc = "../packages/")
   
   # CHECKS 
   ##############################################
   
   # Create output folder if it doesn't exist 
-  outFile_spl <- strsplit(outFile, "/")[[1]]
-  outDir <- paste0(outFile_spl[1:(length(outFile_spl)-1)], collapse="/")
-  if (!file.exists(outDir)) {
-    dir.create(outDir, recursive=TRUE)
-  }
+  # outFile_spl <- strsplit(outFile, "/")[[1]]
+  # outDir <- paste0(outFile_spl[1:(length(outFile_spl)-1)], collapse="/")
+  # if (!file.exists(outDir)) {
+  #   dir.create(outDir, recursive=TRUE)
+  # }
   
   # check catchments exist and CATCHNUM column present
   if (!file.exists(catchDbf)) {
