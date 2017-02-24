@@ -4,7 +4,7 @@
 
 # Note - only run this function on one process at a time. If the function is running twice and writing chunks to the same tmp file, the chunks will get mixed up.
   
-gen_networks_shp <- function(baFile, idColBa, networksCsv, outFile, prjFile, tmp){
+gen_networks_shp <- function(baFile, idColBa, networksCsv, outFile, Dissolve = FALSE, prjFile, tmp){
   
   
   # i. combine each benchmark in the network into a shapefile called netRows. e.g. triples network: 3 rows
@@ -21,9 +21,10 @@ gen_networks_shp <- function(baFile, idColBa, networksCsv, outFile, prjFile, tmp
   
   # NOTE: file size for ecoregion 139 which only has 54 single benchmarks and ~24000 networks is 1.2 gb. Could easily run over the 3gb shp file limit. If so will have to add code to split into multiple files. Maybe based on the number of chunks it takes to get to a certain file size. might be best to limit it to 1gb per shp.
   
-  library(raster)
-  library(maptools)
-  library(sp)
+  library(raster, lib.loc = "../packages/")
+  library(maptools, lib.loc = "../packages/")
+  library(sp, lib.loc = "../packages/")
+  library(rgeos, lib.loc = "../packages/")
   
   # CHECKS
   ##########################################
@@ -94,8 +95,8 @@ gen_networks_shp <- function(baFile, idColBa, networksCsv, outFile, prjFile, tmp
       if(pb %in% baShp@data[[idColBa]]){ # ADD ERROR CATCHING FOR WHEN PB1 NOT IN BASHP
         row1 <- baShp[baShp@data[[idColBa]]==pb,] # subset to get shp file of pb1
         row1 <- spChFIDs(row1, as.character(rowName)) # assign unique row IDs
-        row1@data$network <- network
-        row1@data$netName <- net
+        row1@data$network_id <- network
+        row1@data$networks <- net
         rowName <- rowName + 1
         if(row == 1){
           netRows <- row1
@@ -156,5 +157,34 @@ gen_networks_shp <- function(baFile, idColBa, networksCsv, outFile, prjFile, tmp
   file.copy(prjFile, paste0(substr(outFile, 1, nchar(outFile)-4), ".prj"))
   
   print("deleting chunks...")
-  file.remove(list.files(tmp, pattern=c("CHUNK"), full.names=TRUE))  
+  file.remove(list.files(tmp, pattern=c("CHUNK"), full.names=TRUE))
+  
+  # DISSOLVE
+  if(Dissolve == TRUE){
+    
+    print("Dissolving...")
+    
+    # Check topology and fix
+    if(!gIsValid(masterShp)){
+      masterShp <- buffer(masterShp, 0, dissolve = FALSE)
+    }
+    masterShp_dslv <- unionSpatialPolygons(masterShp, masterShp@data$networks) #dissolve, row.names becomes networks field
+    df <- data.frame(networks=row.names(masterShp_dslv)) # make attribute table
+    row.names(df) <- df$networks
+    masterShp_dslv_df <- SpatialPolygonsDataFrame(masterShp_dslv, df) # join dissolved polygons and attribute table
+    
+    # copy back network ids
+    masterShp_dslv_df@data$network_id <- 0
+    for(d in as.character(masterShp_dslv_df@data$networks)){
+      masterShp_dslv_df@data$network_id[masterShp_dslv_df@data$networks == d] <- masterShp@data$network_id[masterShp@data$networks == d][1]
+    }
+    
+    # order columns and rows
+    masterShp_dslv_df <- masterShp_dslv_df[order(masterShp_dslv_df@data$network_id),c("network_id","networks")]
+    row.names(masterShp_dslv_df) <- as.character(1:nrow(masterShp_dslv_df))
+    
+    # save
+    writePolyShape(masterShp_dslv_df, paste0(substr(outFile, 1, nchar(outFile)-4), "_dslv.shp")) # save shp
+    file.copy(prjFile, paste0(substr(outFile, 1, nchar(outFile)-4), "_dslv.prj"))
+  }
 }
