@@ -9,10 +9,7 @@
 
 # all the elements in a widget need to be assigned to a container group. And each container group needs to be assigned to a parent container.
 
-rm(list=ls())
-
-
-#GUI_v2 <- function(){
+GUI_v2 <- function(){
   
   # memoise, digest, gWidget2, and RGtk2 are dependencies for gWidgets2RGtk2. These must be loaded in this order.
   library(memoise, lib.loc = "../packages/")  
@@ -83,11 +80,11 @@ rm(list=ls())
   # checkboxes to select new folders to add
   lyt1a[4,1:2, anchor = c(1,0)] <- "Create folders"
   lyt1a[5,1] <- gp_1_folders_check_input <- gcheckbox(text = "input", checked=TRUE, container = lyt1a)
-  lyt1a[5,2] <- gp_1_folders_check_gisdata <- gcheckbox(text = "networks", checked=TRUE, container = lyt1a)
+  lyt1a[5,2] <- gp_1_folders_check_gisdata <- gcheckbox(text = "gisdata", checked=TRUE, container = lyt1a)
   lyt1a[6,1] <- gp_1_folders_check_benchmarks <- gcheckbox(text = "benchmarks", checked=TRUE, container = lyt1a)
   lyt1a[6,2] <- gp_1_folders_check_networks <- gcheckbox(text = "networks", checked=TRUE, container = lyt1a)
   lyt1a[7,1] <- gp_1_folders_check_results <- gcheckbox(text = "results", checked=TRUE, container = lyt1a)
-  lyt1a[7,2] <- gp_1_folders_check_tmp <- gcheckbox(text = "networks", checked=TRUE, container = lyt1a)
+  lyt1a[7,2] <- gp_1_folders_check_tmp <- gcheckbox(text = "tmp", checked=TRUE, container = lyt1a)
   
   # optional other filenames to add
   lyt1a[8,1, anchor = c(1,0)] <- "Other (optional)"
@@ -142,8 +139,8 @@ Parent folder: the folder where the project will be stored.\n
 Create folders: each folder with a checked box will be created,
 as well as a custom folder if defined in the text box.\n\n
 Projection File
-Select a .prj file that defines the desired projection.
-See the NWB.prj file for an example.
+Select a .prj file that defines the projection to be used for all shapefiles.
+See the PBA.prj file for an example.
     "))
 
   
@@ -235,16 +232,14 @@ See the NWB.prj file for an example.
   
   lyt2[1:6, 3] <- gp_2_text <- gframe("Tool description", container = lyt2, expand = TRUE, pos = 1)
   lyt2b <- glayout(container = gp_2_text, spacing = 10)
-  lyt2b[1,1] <- glabel(paste0("This tool uses the output ranker csv file from the BUILDER
-software to create a shapefile of benchmark polygons.\n
+  lyt2b[1,1] <- glabel(paste0("This tool makes a shapefile of benchmark polygons. The attribute table has a PB field that
+contains the benchmark names as defined in the builder ranker csv file.\n
 The benchmark names and their associated list of catchments
 in the csv file are used along with the catchments shapefile
 to generate a polygon for each benchmark listed in the 
 BUILDER csv file.\n
 An optional shapefile of additional polygons can be provided
 and will be appended to the bottom of the output shapefile.
-This could be used to add benchmarks not included in the
-BUILDER csv file for example.
 "))
   
   
@@ -374,20 +369,25 @@ BUILDER csv file for example.
   
   lyt3[1:11, 3] <- gp_3_text <- gframe("Tool description", container = lyt3, expand = TRUE, pos = 1)
   lyt3b <- glayout(container = gp_3_text, spacing = 10)
-  lyt3b[1,1] <- glabel(paste0("This tool tabulates the area of raster values within each catchment and adds the values 
-as new columns in the catchments shapefile attribute table.\n
-The new columns in the catchments shapefile attribute table will be the criteria name appended
+  lyt3b[1,1] <- glabel(paste0("This tool evaluates user provided polygons for benchmark status based on size and
+intactness parameters. It was originally designed for testing the existing protected area 
+network. After removing catchments based on the intactness threshold, it adds the following 
+fields for each contiguous polygon: Area (km2), minimum intactness of catchments in the
+polygon, size ratio (Area / Area target). Polygons with size ratio values of 1.0 or higher meet 
+the requirements for benchmark status.\n
+The new fields in the catchments shapefile attribute table will be the criteria name appended
 to each raster class value (e.g. gpp1, gpp2 etc.). The criteria name should be text characters
 with no spaces.\n
 The raster map should be in ascii format with cell size in metres. Values should be integers
 representing classes of data. Either categorical classes or classes representing ranges of
 continuous data.\n
 The disaggregate factor is a factor to reduce the raster cell size by when tabulating areas
-in each catchment. Reducing cell size for the tabulation gives more accurate area values because
-cells have closer alignment with catchment boundaries. e.g. if 10 is used, a 250m resolution would
-change to a 25m resolution. Processing time will increase with larger disaggregate factors.\n
+in each catchment. Reducing cell size for the tabulation gives more accurate area values
+because cells have closer alignment with catchment boundaries. e.g. if 10 is used, a 1000m
+resolution would change to a 100m resolution. Processing time will increase with larger
+disaggregate factors.\n
 If the 'Save as new file?' box is checked and a file path provided, a new shapefile is saved.
-Otherwise the new columns are added to the catchments file provided.\n"))
+Otherwise the new fields are added to the catchments file provided.\n"))
   
   
   ###### tab 4 - generate target tables ############################################################
@@ -591,18 +591,18 @@ and multipled by the area target to get the representation target in km2."))
   
   lyt5[1:8, 3] <- gp_5_text <- gframe("Tool description", container = lyt5, expand = TRUE, pos = 1)
   lyt5b <- glayout(container = gp_5_text, spacing = 10)
-  lyt5b[1,1] <- glabel(paste0("This tool uses the tabulated criteria values calculated in the 'Criteria to catchments' tool,
-along with the target table created in the 'Target tables' tool, to test whether individual benchmarks
-meet the representation targets.\n
+  lyt5b[1,1] <- glabel(paste0("This tool uses the builder ranker table and the tabulated criteria values from the Criteria to 
+Catchments tool, to calculate the area of each criteria class in each benchmark. It evaluates 
+these against the target tables to see whether each benchmark meets the representation targets. 
+All benchmarks in the builder ranker file are evaluated, unless the optional filter table is 
+provided.\n
 The criteria name should match that used in the 'Criteria to catchments' tool.\n
 If a benchmark passes a given target, i.e. it contains at least the area of a target class defined
 in the target table, it is assigned a '1' in the results table. Otherwise the proportion of the
 target met is reported.\n
-The area of each class in each benchmark is calculated using the catchments attribute table and the
-builder ranker file that defines which catchments make up each benchmark. All benchmarks in the
-builder ranker file are evaluated, unless the optional filter file is provided. The filter file
-is a csv table with a 'PB' column listing the benchmark names to be evaluated. All the benchmark names
-must be in the builder ranker file, but only those in the filter file will be evaluated."))
+The filter file is a csv table with a 'PB' column listing the benchmark names to be evaluated.
+All the benchmark names must be in the builder ranker file, but only those in the filter file will
+be evaluated."))
   
   
   ###### tab 6 - representation evaluation - networks ############################################################
@@ -661,7 +661,7 @@ must be in the builder ranker file, but only those in the filter file will be ev
   
   # button to run the networkRep function
   lyt6a[10,1:2] <- gp_6_run_btn <- gbutton(
-    text = "Assess benchmark representation",
+    text = "Assess network representation",
     container = lyt6a,
     handler = function(h, ...){ 
       svalue(txtOutput) <- paste0(svalue(txtOutput), "\n", "Working...")
@@ -909,7 +909,7 @@ A temporary file is also needed for storing data during processing. This can be 
 after the tool has finished.\n
 The standard output shapefile has a row for each benchmark in each network, and a 'networks'
 field that groups benchmarks into networks. If the Dissolve box is checked an additional
-shapefile is output (with a '_dslv' suffix) where each row is a complete network."))
+shapefile is output (with a '_dslv' suffix) where benchmarks are dissolved into networks."))
   
   
   ###### tab 9 - evaluate existing polygons for benchmark status ######################################
@@ -1027,7 +1027,7 @@ represents catchment intactness.\n
 The area target is the minimum size required for benchmark status.\n
 Any catchments with intactness values less than the intactness threshold will be removed from
 the polygon being evaluated.\n
-After removing catchments based on intactness, the tool adds columns to the attribute table
+After removing catchments based on intactness, the tool adds fields to the attribute table
 reporting the following attributes for each contiguous polygon larger than 1km2:
       - Area (km2)
       - Area target (km2)
@@ -1044,7 +1044,7 @@ requirements for benchmark status."))
   
   lyt10.1 <- glayout(container = nb10.1)
   
-  lyt10.1[1:13, 1:2] <- gp_10.1_frm_1 <- gframe("Calculate dissimilarity values", container = lyt10.1, spacing = 10, expand = TRUE)
+  lyt10.1[1:10, 1:2] <- gp_10.1_frm_1 <- gframe("Calculate dissimilarity values", container = lyt10.1, spacing = 10, expand = TRUE)
   lyt10.1a <- glayout(container = gp_10.1_frm_1)
   
   # browse to select input shapefile
@@ -1059,19 +1059,9 @@ requirements for benchmark status."))
     }
   )
   
-  # text box to input netowrk id column
-  lyt10.1a[3,1] <- "Network ID column"
-  lyt10.1a[3,2] <- gp_10.1_netId_txt <- gedit(text = "networks", 
-                                            container = lyt10.1a,
-                                            handler = function(h,...){
-                                              svalue(txtOutput) <- paste0(svalue(txtOutput), "\n", "Network ID column: ", svalue(gp_10.1_netId_txt))
-                                            })
-  
-  lyt10.1a[4,1:2] <- gseparator(horizontal = TRUE, container = lyt10.1a, expand=TRUE)
-  
   # browse to select input shapefile
-  lyt10.1a[5,1] <- "Benchmark file (.shp)"
-  lyt10.1a[5,2] <- gp_10.1_bashp_btn <- gfilebrowse( # file browser
+  lyt10.1a[3,1] <- "Benchmark file (.shp)"
+  lyt10.1a[3,2] <- gp_10.1_bashp_btn <- gfilebrowse( # file browser
     text = "", 
     type = "open", 
     quote = TRUE, 
@@ -1081,19 +1071,11 @@ requirements for benchmark status."))
     }
   )
   
-  # text box to input netowrk id column
-  lyt10.1a[6,1] <- "Benchmark ID column"
-  lyt10.1a[6,2] <- gp_10.1_baId_txt <- gedit(text = "PB", 
-                                              container = lyt10.1a,
-                                              handler = function(h,...){
-                                                svalue(txtOutput) <- paste0(svalue(txtOutput), "\n", "Benchmark ID column: ", svalue(gp_10.1_baId_txt))
-                                              })
-  
-  lyt10.1a[7,1:2] <- gseparator(horizontal = TRUE, container = lyt10.1a, expand=TRUE)
+  lyt10.1a[4,1:2] <- gseparator(horizontal = TRUE, container = lyt10.1a, expand=TRUE)
   
   # browse to select raster1
-  lyt10.1a[8,1] <- "Reference raster (.asc)"
-  lyt10.1a[8,2] <- gp_10.1_ras1_btn <- gfilebrowse( # file browser
+  lyt10.1a[5,1] <- "Reference raster (.asc)"
+  lyt10.1a[5,2] <- gp_10.1_ras1_btn <- gfilebrowse( # file browser
     text = "", 
     type = "open", 
     quote = TRUE, 
@@ -1104,8 +1086,8 @@ requirements for benchmark status."))
   )
   
   # browse to select raster2
-  lyt10.1a[9,1] <- "Clip raster (.asc)"
-  lyt10.1a[9,2] <- gp_10.1_ras2_btn <- gfilebrowse( # file browser
+  lyt10.1a[6,1] <- "Clip raster (.asc)"
+  lyt10.1a[6,2] <- gp_10.1_ras2_btn <- gfilebrowse( # file browser
     text = "", 
     type = "open", 
     quote = TRUE, 
@@ -1116,20 +1098,20 @@ requirements for benchmark status."))
   )
   
   # Radio checkbox to select continuous or categorical raster map
-  lyt10.1a[10,1] <- gp_10.1_continuous_radio <- gradio(items = c("Continuous", "Categorical"), container = lyt10.1a,selected = 1)
+  lyt10.1a[7,1] <- gp_10.1_continuous_radio <- gradio(items = c("Continuous", "Categorical"), container = lyt10.1a,selected = 1)
   
-  lyt10.1a[11,1:2] <- gseparator(horizontal = TRUE, container = lyt10.1a, expand=TRUE)
+  lyt10.1a[8,1:2] <- gseparator(horizontal = TRUE, container = lyt10.1a, expand=TRUE)
   
   # Text box to input new column name
-  lyt10.1a[12,1] <- "New column name"
-  lyt10.1a[12,2] <- gp_10.1_newCol_txt <- gedit(text = "", 
+  lyt10.1a[9,1] <- "New column name"
+  lyt10.1a[9,2] <- gp_10.1_newCol_txt <- gedit(text = "", 
                                              container = lyt10.1a,
                                              handler = function(h,...){
                                                svalue(txtOutput) <- paste0(svalue(txtOutput), "\n", "New column name: ", svalue(gp_10.1_newCol_txt))
                                              })
   
   # button to run the metricsDissimilarity function
-  lyt10.1a[13,1:2] <- gp_10.1_run_btn <- gbutton(
+  lyt10.1a[10,1:2] <- gp_10.1_run_btn <- gbutton(
     text = "Calculate dissimilarity",
     container = lyt10.1a,
     handler = function(h, ...){ 
@@ -1139,9 +1121,9 @@ requirements for benchmark status."))
       tryCatch({
         metricsDissimilarity(
           netPath = svalue(gp_10.1_inshp_btn), 
-          idColNet = svalue(gp_10.1_netId_txt), 
+          idColNet = "networks", 
           baPath = svalue(gp_10.1_bashp_btn), 
-          idColBa = svalue(gp_10.1_baId_txt),
+          idColBa = "PB",
           raster1 = svalue(gp_10.1_ras1_btn),
           raster2 = svalue(gp_10.1_ras2_btn),
           continuous = continuousLogical,
@@ -1157,27 +1139,25 @@ requirements for benchmark status."))
     }
   )
   
-  lyt10.1[1:13, 3] <- gp_10.1_text <- gframe("Tool description", container = lyt10.1, expand = TRUE, pos = 1)
+  lyt10.1[1:10, 3] <- gp_10.1_text <- gframe("Tool description", container = lyt10.1, expand = TRUE, pos = 1)
   lyt10.1b <- glayout(container = gp_10.1_text, spacing = 10)
-  lyt10.1b[1,1] <- glabel(paste0("Each tool in the 'Add network attributes' tab adds new columns to the networks shapefile.
+  lyt10.1b[1,1] <- glabel(paste0("Each tool in the 'Add network attributes' tab adds new fields to the networks shapefile.
 It is recommended you keep a copy of the original file before adding new attributes.
       ----------
 The dissimilarity tool calculates dissimilarity values for criteria maps by comparing
 the distribution of criteria values within the network, to the distribution in the entire boundary
 area. Dissimilarity values closer to 1.0 have more similar distributions.\n
 The network shapefile containing the networks to be evaluated is needed, as well as the benchmark
-shapefile containing all benchmarks that appear in the networks. The ID columns hold the
+shapefile containing all benchmarks that appear in the networks. The ID fields hold the
 unique network and benchmark names.
 Note: Dissimilarity values can be added to the benchmark shapefile by setting both the network
-and benchmark shapefile options to be the individual benchmarks shapefile.\n
+and benchmark shapefile options to be the same file.\n
 The reference raster should cover the boundary area only. This is the reference area against
 which networks will be compared. The clip raster is clipped by each network in turn and must
 therefore extend to include all networks in the network shapefile. If none of the networks
 extend beyond the boundary area, then the same raster can be used for both reference and clip.\n
 The raster maps should either be categorical maps in which case the Bray-Curtis statistic
 is used, or they should be continuous maps in which case the KS-statistic is used.\n
-Continuous maps should be the original criteria maps before values were grouped into
-ranges for the representation analysis.\n
 The dissimilarity values will be added to a new column defined in the 'New column name'
 option. The name should not contain any spaces."))
   
@@ -1188,7 +1168,4 @@ option. The name should not contain any spaces."))
   #frmGroup <- ggroup(container = frmOutput)
   txtOutput <- gtext("", container = frmOutput, expand = TRUE)
 
-#}
-
-
-#GUI_v1()
+}
