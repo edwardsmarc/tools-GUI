@@ -20,4 +20,7 @@ install.packages("memoise", lib = "../packages/", repos='http://cran.stat.sfu.ca
 install.packages("digest", lib = "../packages/", repos='http://cran.stat.sfu.ca')
 install.packages("RGtk2", lib = "../packages/", repos='http://cran.stat.sfu.ca')
 install.packages("gWidgets2RGtk2", lib = "../packages/", repos='http://cran.stat.sfu.ca')
-install.packages("gWidgets2RGtk2", lib = "../packages/", repos='http://cran.stat.sfu.ca')
+install.packages("rgdal", lib = "../packages/", repos='http://cran.stat.sfu.ca')
+install.packages("ggplot2", lib = "../packages/", repos='http://cran.stat.sfu.ca')
+install.packages("ggplot2", lib = "../packages/", repos='http://cran.stat.sfu.ca')
+install.packages("data.table", lib = "../packages/", repos='http://cran.stat.sfu.ca')
