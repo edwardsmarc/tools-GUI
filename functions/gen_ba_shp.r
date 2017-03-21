@@ -4,6 +4,7 @@
 
 gen_ba_shp <- function(buildCsv, catchmentsShp, outFile, prjFile, shp.paths=""){
   
+  library(sp, lib.loc = "../packages/")
   library(raster, lib.loc = "../packages/")
   library(rgeos, lib.loc = "../packages/")
   library(maptools, lib.loc = "../packages/")
@@ -147,6 +148,6 @@ gen_ba_shp <- function(buildCsv, catchmentsShp, outFile, prjFile, shp.paths=""){
     }
     
     writePolyShape(pbShp, outFile)
-    file.copy(prjFile, paste0(strsplit(outFile,".shp")[[1]], ".prj"), overwrite = TRUE)
+    file.copy(prjFile, paste0(substr(outFile, 1, nchar(outFile)-4), ".prj"), overwrite = TRUE)
   }
 }
