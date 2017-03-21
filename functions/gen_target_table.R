@@ -5,6 +5,7 @@
   
 gen_target_table <- function(mdrVal, ecoRast, ecoBnd, outFile) {
   
+  library(sp, lib.loc = "../packages/")
   library(raster, lib.loc = "../packages/")
 
   # Checks 
