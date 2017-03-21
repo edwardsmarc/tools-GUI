@@ -2,7 +2,7 @@
 # Feb 20 2017
 # function for adding dissimilarity metrics to shapefiles. Should work with both benchmark and network shapefiles
 
-metricsDissimilarity <- function(netPath, idColNet, baPath, idColBa, raster1, raster2, continuous, newCol){
+metricsDissimilarity <- function(netPath, idColNet, baPath, idColBa, raster1, raster2, continuous, newCol, plotDir=""){
   
   # Calculates dissimilarity statistics for networks of denovo benchmarks. 
   # raster2 is clipped to each network in netShp. The distribution in the resulting clipped raster is compared to the distribution of raster 1.
@@ -17,8 +17,10 @@ metricsDissimilarity <- function(netPath, idColNet, baPath, idColBa, raster1, ra
   # continuous - logical, if true, ks test used, if false, bray curtis used.
   # newCol - name of new column to be made. Should not contain spaces
   
+  library(sp, lib.loc = "../packages/")
   library(raster, lib.loc = "../packages/")
   library(maptools, lib.loc = "../packages/")
+  library(ggplot2, lib.loc = "../packages/")
   
   # CHECKS
   ######################################################################
@@ -48,7 +50,7 @@ metricsDissimilarity <- function(netPath, idColNet, baPath, idColBa, raster1, ra
   if(file.exists(baPath)){
     baShp <- shapefile(baPath)
     if(!idColBa %in% names(baShp)){
-      stop(paste0("No ", idColNet, "column in file: "), baPath)
+      stop(paste0("No ", idColBa, " column in file: "), baPath)
     }
   } else{
     stop(paste0("File does not exist: "), baPath)
@@ -122,25 +124,29 @@ metricsDissimilarity <- function(netPath, idColNet, baPath, idColBa, raster1, ra
     
     # run calcs
     if(continuous == TRUE){ # calculate statistic for KS
-      #if(nchar(plotDir)>0){
-        #netShp@data[[paste0("ks_net_",crit)]][netShp@data[[idColNet]]==net] <- as.numeric(ksPlot(get(paste0(crit,"Ref")), netVals, saveAs=paste0(plotDir,"/",crit,"_",net,".png")))
-      #} else{
-        netShp@data[[newCol]][netShp@data[[idColNet]]==net] <- as.numeric(ksStat(refVals, netVals))
-      #}
-    } else{
-      # if(nchar(plotDir)>0){
-      #   netShp@data[[paste0("bc_net_",crit)]][netShp@data[[idColNet]]==net] <- as.numeric(bcStat(get(paste0(crit,"Ref")), netVals))
-      #   keepLabels <- unique(get(paste0(crit,"_FDA"))) # ME changed so values in FDA but not in eco are included in output plots
-      #   keepLabels <- keepLabels[!is.na(keepLabels)]
-      #   keepLabels <- paste0("nalc", keepLabels)
-      #   catLabels=list(lcc.lab[keepLabels])[[1]] # subset labels by classes in lcc map
-      #   bcPlot(get(paste0(crit,"Ref")), netVals, plotTitle="nalc", regLab="Region", netLab="Network", labels=catLabels, saveAs=paste0(plotDir,"/",crit,"_",net,".png"))
-      # } else{
+      if(nchar(plotDir)>0){ # make plot if directory provided
+        plotOut <- paste0(plotDir, "/", newCol, "_", net, ".png")
+        title <- paste0(newCol, ":   ", net)
+        netShp@data[[newCol]][netShp@data[[idColNet]]==net] <- as.numeric(ksPlot(refVal = refVals, netVal = netVals, plotTitle = title, saveAs = plotOut))
+      } else{ # otherwise just return value
+        netShp@data[[newCol]][netShp@data[[idColNet]]==net] <- as.numeric(ksPlot(refVals, netVals))
+      }
+    } else{ # calculate statistic for BC
+      if(nchar(plotDir)>0){ # make plot if directory provided
+        plotOut <- paste0(plotDir, "/", newCol, "_", net, ".png")
+        title <- paste0(newCol, ":   ", net)
+        netShp@data[[newCol]][netShp@data[[idColNet]]==net] <- as.numeric(bcPlot(refVals, netVals, plotTitle = title, saveAs = plotOut)) 
+      } else{ # otherwise just return value
         netShp@data[[newCol]][netShp@data[[idColNet]]==net] <- as.numeric(bcStat(refVals, netVals)) 
       }
-    #}
-    #}
+    }
     counter <- counter + 1
+  }
+  
+  # remove any extra SP_ID columns
+  for(x in colnames(netShp@data)){ 
+    if(grepl("SP_ID",x)==TRUE)
+      netShp@data[[x]] <- NULL
   }
   
   # SAVE
