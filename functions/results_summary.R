@@ -2,7 +2,7 @@
 # Feb 14 2017
 # GUI version of rankAddedSolution.R - this version just requires a dataDir folder, it will then go and find the criteria results and targets in that folder
 
-results_summary <- function(criteria,summaryDir,rareThreshold=0,outFile) {
+results_summary <- function(criteria, summaryDir, rareThreshold = 0, gapThreshold = 100, outFile) {
   
   # criteria - string of criteria to include in results table. seperated by commas.
   
@@ -11,6 +11,8 @@ results_summary <- function(criteria,summaryDir,rareThreshold=0,outFile) {
     # target tables must have both "target" and "cmi" in filename (e.g. target_cmi.csv)
   
   # rareThreshold - only classes with bnd_prop column greater than this percentage value are counted as gaps.
+  
+  # gapThreshold - the percentage of the target needed to be met. Defaults to 100%. If set to e.g. 90%, gaps only counted if <90% of the target is met.
   
   # outFil - directory to save table in
   
@@ -37,17 +39,18 @@ results_summary <- function(criteria,summaryDir,rareThreshold=0,outFile) {
   }
   
   # Create output folder if it doesn't exist 
-  outFile_spl <- strsplit(outFile, "/")[[1]]
-  outDir <- paste0(outFile_spl[1:(length(outFile_spl)-1)], collapse="/")
-  if (!file.exists(outDir)) {
-    dir.create(outDir, recursive=TRUE)
-  }
+  # outFile_spl <- strsplit(outFile, "/")[[1]]
+  # outDir <- paste0(outFile_spl[1:(length(outFile_spl)-1)], collapse="/")
+  # if (!file.exists(outDir)) {
+  #   dir.create(outDir, recursive=TRUE)
+  # }
   
   
   # SUMMARISE RESULTS FOR EACH CRITERIA, THEN COMBINE
   ##############################################
   
   rareProp <- as.numeric(rareThreshold)/100
+  gapProp <- as.numeric(gapThreshold)/100
   
   # list all csv files in summeryDir
   fileList <- list.files(summaryDir)
@@ -71,7 +74,7 @@ results_summary <- function(criteria,summaryDir,rareThreshold=0,outFile) {
     resDir <- paste0(summaryDir, "/", resDir)
     
     # select target table
-    targetDir <- fileList[grepl(crit, fileList)]
+    targetDir <- fileList[grepl(paste0("_",crit,"_"), fileList)] # select files with e.g. "_cmi_
     targetDir <- targetDir[grepl("target", targetDir)]
     
     # error if more than one, or zero files selected
@@ -114,7 +117,7 @@ results_summary <- function(criteria,summaryDir,rareThreshold=0,outFile) {
         .$class2 # . is stand in for the data frame, so this prints the class2 column as a vector
       
       # prepare summarized results
-      dfResults$gaps <- apply(dfResults[colnames(dfResults) %in% nonrare], 1, function(x) length(x[x<1]))
+      dfResults$gaps <- apply(dfResults[colnames(dfResults) %in% nonrare], 1, function(x) length(x[x<gapProp]))
       dfResults <- dplyr::select(dfResults, networks,gaps)
       names(dfResults)[names(dfResults)=="gaps"] <- paste0(crit,"_gaps") # change col name
       
@@ -122,7 +125,7 @@ results_summary <- function(criteria,summaryDir,rareThreshold=0,outFile) {
       if(counter==1){
         dfMaster <- dfResults
       } else{
-        dfMaster <- merge(dfMaster, dfResults, by="networks")
+        dfMaster <- merge(dfMaster, dfResults, by="networks") # only keeps common networks
       }
       
     } else{
