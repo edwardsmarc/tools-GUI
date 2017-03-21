@@ -21,9 +21,9 @@ gen_networks_shp <- function(baFile, idColBa, networksCsv, outFile, Dissolve = F
   
   # NOTE: file size for ecoregion 139 which only has 54 single benchmarks and ~24000 networks is 1.2 gb. Could easily run over the 3gb shp file limit. If so will have to add code to split into multiple files. Maybe based on the number of chunks it takes to get to a certain file size. might be best to limit it to 1gb per shp.
   
+  library(sp, lib.loc = "../packages/")
   library(raster, lib.loc = "../packages/")
   library(maptools, lib.loc = "../packages/")
-  library(sp, lib.loc = "../packages/")
   library(rgeos, lib.loc = "../packages/")
   
   # CHECKS
