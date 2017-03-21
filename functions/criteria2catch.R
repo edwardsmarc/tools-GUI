@@ -21,6 +21,7 @@ criteria2catch <- function(catchmentsShp, rasterPath, cellsize, disaggregate.fac
 #prjFile = path to the .prj file to be used.
 
   
+  library(sp, lib.loc = "../packages/")
   library(raster, lib.loc = "../packages/")
   library(maptools, lib.loc = "../packages/")
   
@@ -122,5 +123,5 @@ criteria2catch <- function(catchmentsShp, rasterPath, cellsize, disaggregate.fac
   
   #save shapefile
   writePolyShape(catchShp, outFile)
-  file.copy(prjFile, paste0(strsplit(outFile,".shp")[[1]], ".prj"), overwrite = TRUE)
+  file.copy(prjFile, paste0(substr(outFile, 1, nchar(outFile)-4), ".prj"), overwrite = TRUE)
 }
