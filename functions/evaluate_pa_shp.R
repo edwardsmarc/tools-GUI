@@ -23,9 +23,9 @@ evaluate_pa_shp <- function(inputShp, catchmentsShp, intactnessCol, areaTarget, 
   # areaTarget - area target PAs need to achieve - e.g. Minimum Dynamic Reserve value
   # intactnessThreshold - minimum intacntess of catchments permitted in benchmark - e.g. 0.8
   
+  library(sp, lib.loc = "../packages/")
   library(raster, lib.loc = "../packages/")
   library(maptools, lib.loc = "../packages/")
-  library(sp, lib.loc = "../packages/")
   library(rgeos, lib.loc = "../packages/")
   
   # CHECKS
@@ -171,5 +171,5 @@ evaluate_pa_shp <- function(inputShp, catchmentsShp, intactnessCol, areaTarget, 
   
   print("Saving...")
   writePolyShape(shp, outFile)
-  file.copy(prjFile, paste0(strsplit(outFile,".shp")[[1]], ".prj"), overwrite = TRUE)
+  file.copy(prjFile, paste0(substr(outFile, 1, nchar(outFile)-4), ".prj"), overwrite = TRUE)
 }
