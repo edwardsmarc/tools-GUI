@@ -4,7 +4,7 @@
 
 # Note - only run this function on one process at a time. If the function is running twice and writing chunks to the same tmp file, the chunks will get mixed up.
   
-gen_networks_shp <- function(baFile, idColBa, networksCsv, outFile, Dissolve = FALSE, prjFile, tmp){
+gen_networks_shp <- function(baFile, idColBa, networksCsv="", randomNet="", nBA="", outFile, Dissolve = FALSE, prjFile, tmp){
   
   
   # i. combine each benchmark in the network into a shapefile called netRows. e.g. triples network: 3 rows
@@ -52,21 +52,53 @@ gen_networks_shp <- function(baFile, idColBa, networksCsv, outFile, Dissolve = F
   # remove any existsing chunks from tmp
   file.remove(list.files(tmp, pattern=c("CHUNK"), full.names=TRUE))
   
-  # Check networksCsv exists and has networks column - then get netList
-  if(file.exists(networksCsv)){
-    netFile <- read.csv(networksCsv)
-    if("networks" %in% names(netFile)){
-      netList <- as.character(netFile$networks)
-    } else{
-      stop(paste0("No 'networks' column in file: "), networksCsv)
-    }
-  } else{
-    stop(paste0("File does not exist: ", networksCsv))
-  }
   
   # Check prjFile exists
   if(!file.exists(prjFile)){
     stop(paste0("File does not exist: ", prjFile))
+  }
+  
+  ## NETLIST ##
+  # Check networksCsv exists and has networks column - then get netList
+  if(nchar(networksCsv) > 0 & nchar(randomNet) > 0){stop("Only one of 'Networks file' or 'random number' can be provided.")} # either generate provided networks, or random selection of all networks. Can't do both.
+  
+  if(nchar(networksCsv) == 0 & nchar(randomNet) == 0){stop("One of 'Networks file' or 'random number' needs to be provided.")}
+  
+  if(nchar(networksCsv) == 0 & nchar(randomNet) > 0){ # if using random generation method...
+    
+    # make nBA  and randomNets numeric
+    if(nchar(nBA) > 0){
+      nBAval <- as.numeric(nBA)
+    }
+    if(nchar(randomNet) > 0){
+      randomNetval <- as.numeric(randomNet)
+    }
+    
+    # make full list of networks
+    singles <- baShp@data$PB
+    pbs <- combn(singles, nBAval, simplify=FALSE) # simplify=FALSE returns a list
+    netListFull <- sapply(pbs, function(x) paste0(x,collapse="_")) # this works for any nBA value - makes network names from the list of benchmarks
+    
+    # if sample number is less than full, list, take the random sample, otherwise use the full list
+    if(randomNetval < length(netListFull)){
+      netList <- sample(x = netListFull, size = randomNetval, replace = FALSE) # takes random sample without replacement
+    } else{
+      netList <- netListFull
+    }
+  }
+  
+  # if using user provided networks...
+  if(nchar(networksCsv) > 0 & nchar(randomNet) == 0){
+    if(file.exists(networksCsv)){
+      netFile <- read.csv(networksCsv)
+      if("networks" %in% names(netFile)){
+        netList <- as.character(netFile$networks)
+      } else{
+        stop(paste0("No 'networks' column in file: "), networksCsv)
+      }
+    } else{
+      stop(paste0("File does not exist: ", networksCsv))
+    }
   }
   
   print("building networks shapefile")
@@ -169,6 +201,25 @@ gen_networks_shp <- function(baFile, idColBa, networksCsv, outFile, Dissolve = F
       masterShp <- buffer(masterShp, 0, dissolve = FALSE)
     }
     masterShp_dslv <- unionSpatialPolygons(masterShp, masterShp@data$networks) #dissolve, row.names becomes networks field
+    
+    # delete sliver polygons
+    for(i in 1:length(masterShp_dslv@polygons)){
+      jj <- length(masterShp_dslv@polygons[[i]]@Polygons)
+      dList <- NULL
+      for (j in 1:jj) { # makes list of polygons with area < 1
+        if (masterShp_dslv@polygons[[i]]@Polygons[[j]]@area < 1) {
+          dList <- c(dList, j)
+        }
+      }
+      if (length(dList) > 0) { # delete dList polygons
+        counter <- 0
+        for (d in dList) {
+          masterShp_dslv@polygons[[i]]@Polygons[[d-counter]] <- NULL
+          counter = counter + 1
+        }
+      }
+    }
+    
     df <- data.frame(networks=row.names(masterShp_dslv)) # make attribute table
     row.names(df) <- df$networks
     masterShp_dslv_df <- SpatialPolygonsDataFrame(masterShp_dslv, df) # join dissolved polygons and attribute table
