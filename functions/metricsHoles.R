@@ -75,18 +75,21 @@ metricsHoles <- function(netPath, idColNet, baPath, idColBa,  buildCsvPath="", n
     PBnames <- sapply(y,function(x)x[1]) # extract PB_xxx names i.e., first element of each list
     baCatchments <- lapply(y,function(x)as.integer(x[-c(1:9)])) # remove unecessary columns
     names(baCatchments) <- PBnames # assign PB_xxx names to the list of catchments
+  } else{
+    baCatchments <- ""
   }
   
   # make list of additional benchmark catchments if provided
   if(nchar(buildCsvAddPath) > 0){
     baCatchmentsAdd <- lapply(buildCsvAdd, function(x) unlist(x[!is.na(x)]))
+  } else{
+    baCatchmentsAdd <- ""
   }
   
   counter <- 1
   for(net in netList){
     
     if(counter %% 50 == 0){print(paste0("Processing ", counter, " of ", length(netList)))}
-    
     
     baList <- c()
     baCatchList <- list()
