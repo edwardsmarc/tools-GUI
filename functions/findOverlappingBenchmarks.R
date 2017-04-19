@@ -2,17 +2,23 @@
 # March 20 2017
 # Function to detect overlapping benchmarks in networks and save csv table grouping benchmarks in each network by overlap 
 # input is a list of networks
-# output is a list of lists, each networks list element contains a list of vectors where each vector is a set of benchmarks that are overlapping - list is converted to csv so results can be saved. Csv is converted back to list in later functions
+# output is a list of lists, each networks list element contains a list of vectors where each vector is a set of benchmarks that are overlapping - list is converted to csv so results can be saved. Csv is converted back to list in later functions. Only netowrks that have overlap are added to the csv.
 
 findOverlappingBenchmarks <- function(singlesCsv, nBA, catchDbfPath, buildCsvPath, summaryOut, buildCsvAddPath="", filterCsv=""){
   
-  # netList - list of network names
+  # singlesCsv - The output table from the ‘Benchmark representation’ tool. Must have ‘networks’ column listing benchmark names.
   
-  # catchDbfPath - file path to catchments dbf file
+  # nBA - Number value indicating how many benchmarks should be combined when building networks (see Note 1).
   
-  # buildCsvPath - file path to builder ranker file
+  # Filter file - If provided, only the networks in filter file ‘networks’ column will be processed. Otherwise, all combinations of networks will be evaluated based on the benchmarks in singlesCsv and nBA.
   
-  # buildCsvAddPath - additional benchmark catchments for benchmarks not in buildCsvPath - Table with benchmark names as column names and rows of CATCHNUMs.
+  # catchDbfPath - Catchments dbf file associated with the catchments shapefile that has raster criteria values added using the ‘Criteria to catchments’ tool.
+  
+  # summaryOut - Output file to save the overlap table.
+  
+  # buildCsvPath - Output file from builder listing benchmark names and associated catchments.
+  
+  # buildCsvAddPath - Table with benchmark names as column names and rows of CATCHNUM values. Allows processing of benchmarks that are not in the Builder ranker file. If a ‘PB shapefile’ was added in the ‘Benchmark representation’ tool, the catchments that intersect each shapefile should be provided here. 
   
   
   ### CHECKS ############################################
@@ -86,7 +92,7 @@ findOverlappingBenchmarks <- function(singlesCsv, nBA, catchDbfPath, buildCsvPat
   ###############################################
   if(nchar(filterCsv) > 0){
     filterTab <- read.csv(filterCsv)
-    nets <- as.character(filterTab$networks)
+    netList <- as.character(filterTab$networks)
   } else{
     pbs <- combn(singles, nBA, simplify=FALSE) # simplify=FALSE returns a list
     netList <- sapply(pbs, function(x) paste0(x,collapse="_")) # this works for any nBA value - makes network names from the list of benchmarks
@@ -98,7 +104,10 @@ findOverlappingBenchmarks <- function(singlesCsv, nBA, catchDbfPath, buildCsvPat
   if(nchar(buildCsvPath) > 0){
     y <- strsplit(buildCsv,",")
     PBnames <- sapply(y,function(x)x[1]) # extract PB_xxx names i.e., first element of each list
-    baCatchments <- lapply(y,function(x)as.integer(x[-c(1:9)])) # remove unecessary columns
+    baCatchments <- lapply(y,function(x){
+      x <- x[x!=""] # remove blanks
+      as.integer(x[-c(1:9)]) # remove unecessary columns
+    })
     names(baCatchments) <- PBnames # assign PB_xxx names to the list of catchments
   }
   
@@ -125,7 +134,7 @@ findOverlappingBenchmarks <- function(singlesCsv, nBA, catchDbfPath, buildCsvPat
     for(b in baList){
       # Error if a benchmark is in both lists but catchments don't match
       if(b %in% names(baCatchments) & b %in% names(baCatchmentsAdd)){
-        if(!identical(baCatchments[[b]], baCatchmentsAdd[[b]])){
+        if(!setequal(baCatchments[[b]], baCatchmentsAdd[[b]])){
           stop(paste0("Benchmark in both catchment lists but catchments don't match: ", b))
         }
       }
@@ -178,12 +187,20 @@ findOverlappingBenchmarks <- function(singlesCsv, nBA, catchDbfPath, buildCsvPat
   df <- data.frame(networks = as.character(), groups = as.character())
   for(i in names(megaOut)){
     counts <- c()
-    for(l in 1:length(megaOut[[i]])){
-      new_row <- data.frame(networks = i, groups = paste0(megaOut[[i]][l][[1]], collapse = ","))
-      df <- rbind(df, new_row)
+    hasOverlap <- 0
+    for(ll in 1:length(megaOut[[i]])){ # check all network groups for overlap
+      if(length(megaOut[[i]][[ll]]) > 1){
+        hasOverlap <- 1 # only add networks to the overlap table if they have overlapping benchmarks
+      }
+    }
+    if(hasOverlap == 1){ # only add networks to the overlap table if they have overlapping benchmarks
+      for(l in 1:length(megaOut[[i]])){
+        new_row <- data.frame(networks = i, groups = paste0(megaOut[[i]][l][[1]], collapse = ","))
+        df <- rbind(df, new_row)
+      }
     }
   }
     
   # save table
-  write.csv(df, summaryOut)
+  write.csv(df, summaryOut, row.names = FALSE)
 }
