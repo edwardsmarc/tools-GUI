@@ -289,6 +289,24 @@ metricsHydro <- function(netPath, idColNet, catchDbfPath, intactCol, areaCol, ne
         upShpOut <- SpatialPolygonsDataFrame(upShpDiss, data.frame(networks=net)) # make sp df
         upShpOut <- spChFIDs(upShpOut, as.character(saveCount))
         
+        # delete sliver polygons
+        for(i in 1:length(upShpOut@polygons)){
+          jj <- length(upShpOut@polygons[[i]]@Polygons)
+          dList <- NULL
+          for (j in 1:jj) { # makes list of polygons with area < 1
+            if (upShpOut@polygons[[i]]@Polygons[[j]]@area < 1) {
+              dList <- c(dList, j)
+            }
+          }
+          if (length(dList) > 0) { # delete dList polygons
+            counter <- 0
+            for (d in dList) {
+              upShpOut@polygons[[i]]@Polygons[[d-counter]] <- NULL
+              counter = counter + 1
+            }
+          }
+        }
+        
         # add to master
         if(saveCount == 1){
           masterShp <- upShpOut
