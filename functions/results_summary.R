@@ -74,7 +74,7 @@ results_summary <- function(criteria, summaryDir, rareThreshold = 0, gapThreshol
     resDir <- paste0(summaryDir, "/", resDir)
     
     # select target table
-    targetDir <- fileList[grepl(paste0("_",crit,"_"), fileList)] # select files with e.g. "_cmi_
+    targetDir <- fileList[grepl(paste0(crit), fileList)] # select files with e.g. "cmi
     targetDir <- targetDir[grepl("target", targetDir)]
     
     # error if more than one, or zero files selected
