@@ -3,7 +3,7 @@
 # Function to evaluate benchmark representation.
 # new version of denovoRep function used in NWB that can accept either a list of benchmarks matching the ranker input file, or a shp of polygons to be analysed using GIS tools. If both are provided the names should be unique and results should be output to a single results table. For the shapefiles option, clip criteria maps and calculate targets.
 
-benchmarkRep <- function(catchDbf="",buildCsv="",targetTab,crit,outFile,filterCsv="", shpPath="", clipRaster="", cellsize="", disaggregate.factor="") {
+benchmarkRep <- function(catchDbf="",buildCsv="",targetTab,crit="",outFile,filterCsv="", shpPath="", clipRaster="", cellsize="", disaggregate.factor="") {
   
   # catchDbf (optional)  - path to catchments dbf file. This is the dbf file associated with the catchments shp file. Must have the criteria values tabulated for each criteria raster map - i.e. the dbf file associated with the output from "criteria2catch.R".
   
@@ -214,15 +214,15 @@ benchmarkRep <- function(catchDbf="",buildCsv="",targetTab,crit,outFile,filterCs
       
       rasVals <- ext[[pb]] # get values
       
-      for (c in y$class) { # for each row in the target table
+      for (v in y$class) { # for each row in the target table
         
-        cArea <- length(rasVals[rasVals %in% c]) * cellarea # area of class in PB (km2)
-        t <- y$target_km2[y$class == c] # target (km2)
+        cArea <- length(rasVals[rasVals %in% v]) * cellarea # area of class in PB (km2)
+        t <- y$target_km2[y$class == v] # target (km2)
         
         if(cArea < t){ # if less than target, report proportion
-          y[[pb]][y$class == c] <- round((cArea / t), 2)
+          y[[pb]][y$class == v] <- round((cArea / t), 2)
         } else if(cArea >= t){ # if greater than or equal to target, report 1
-          y[[pb]][y$class == c] <- 1.00
+          y[[pb]][y$class == v] <- 1.00
         }
       }
       counter <- counter + 1
